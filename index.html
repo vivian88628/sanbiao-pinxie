@@ -14032,10 +14032,10 @@ const Store = (function () {
     });
     Store.setWrong(Object.values(map));
   }
-  // ---------- 复习间隔逻辑（取晚值 / 滚动顺延，间隔 +2 / +6 / +14 天） ----------
-  // 锚点 = 这个错字第一次被写对的那天。三个检查点固定在 锚点+2 / +6 / +14（保证学完两周内的关键窗口）。
+  // ---------- 复习间隔逻辑（取晚值 / 滚动顺延，间隔 +2 / +6 / +14 / +28 天） ----------
+  // 锚点 = 这个错字第一次被写对的那天。四个检查点固定在 锚点+2 / +6 / +14 / +28（保证学完约一个月内的巩固窗口）。
   // 但若某次复习晚了，后续检查点会从「上次实际写对日」顺延对应间隔（取 固定值 与 顺延值 的较晚者），
-  // 因此不会因拖延而压缩间隔，也不会一次补复习就"结案"——必须真的三次间隔复习才完成。
+  // 因此不会因拖延而压缩间隔，也不会一次补复习就"结案"——必须真的四次间隔复习才完成。
   // 从未写对 / 最近一次写错 → 从「出错日的第二天」起重听（今天刚错只进错题本，今天不复习）。
   function attemptsFor(entry) {
     const hist = Store.getHistory();
@@ -14065,12 +14065,12 @@ const Store = (function () {
       return { due: true, phase: '补救中', anchor: null, milestones: [], satisfied: 0, last };
     }
     const anchor = correctDates[0];
-    const offs = [2, 6, 14];   // 固定检查点偏移
-    const gaps = [2, 4, 8];    // 相邻检查点间隔（= offs 的差），用于晚了之后的顺延
+    const offs = [2, 6, 14, 28];   // 固定检查点偏移
+    const gaps = [2, 4, 8, 14];    // 相邻检查点间隔（= offs 的差），用于晚了之后的顺延
     const dueDates = [];
     let prevSat = anchor;      // 上一个被满足的检查点实际日期；初始为锚点
     const actual = [];
-    for (let k = 0; k < 3; k++) {
+    for (let k = 0; k < 4; k++) {
       const fixedK = addDaysStr(anchor, offs[k]);
       const rolledK = addDaysStr(prevSat, gaps[k]);
       const dk = fixedK >= rolledK ? fixedK : rolledK;   // max(固定值, 顺延值)
@@ -14080,7 +14080,7 @@ const Store = (function () {
       else { actual.push(null); prevSat = dk; }
     }
     const satisfied = actual.filter(x => x !== null).length;
-    if (satisfied >= 3) return { due: false, phase: '已完成 ✓', anchor, milestones: dueDates, satisfied, last };
+    if (satisfied >= 4) return { due: false, phase: '已完成 ✓', anchor, milestones: dueDates, satisfied, last };
     const nextMi = dueDates[satisfied];
     if (today >= nextMi) return { due: true, phase: '第 ' + (satisfied + 1) + ' 次复习', anchor, milestones: dueDates, satisfied, last };
     return { due: false, phase: '间隔中（下次 ' + nextMi.slice(5) + '）', anchor, milestones: dueDates, satisfied, last };
