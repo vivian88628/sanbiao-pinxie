@@ -364,6 +364,51 @@ button{transition:transform .12s;-webkit-tap-highlight-color:transparent;}
 .sys-tip #sysCount{font-weight:800;color:var(--primary);font-size:15px;}
 
 
+/* ===== 看拼音写词语 ===== */
+.pyw-wrap{max-width:760px;margin:0 auto;padding:4px 2px 24px}
+.pyw-hd{font-size:18px;font-weight:700;margin:6px 2px 10px}
+.pyw-hd .hint{font-size:12px;font-weight:400;color:var(--sub)}
+.pyw-src{background:var(--card);border-radius:var(--r);padding:12px;margin:10px 2px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.pyw-src-t{font-weight:700;margin-bottom:8px;color:var(--ink)}
+.pyw-gs{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.pyw-ta{width:100%;min-height:64px;border:1px solid var(--line);border-radius:10px;padding:8px;font-size:15px;font-family:inherit;resize:vertical;background:#fff}
+.pyw-chips{display:flex;flex-wrap:wrap;gap:7px}
+.pyw-chip{display:inline-flex;flex-direction:column;align-items:flex-start;background:#f4f7fb;border:1px solid #e3e9f2;border-radius:10px;padding:5px 9px;cursor:pointer;line-height:1.15;max-width:100%}
+.pyw-chip b{font-size:13px;color:#2b6cb0;font-weight:600}
+.pyw-chip span{font-size:13px;color:#444}
+.pyw-chip.on{background:var(--tint);border-color:var(--amber)}
+.pyw-chip.on b{color:var(--primary-d)}
+.pyw-chip i{margin-left:6px;color:var(--red);font-style:normal;font-weight:700}
+.pyw-les{margin-bottom:10px}
+.pyw-les-t{font-size:13px;color:var(--sub);margin:2px 0 5px}
+.pyw-sel{margin:10px 2px}
+.pyw-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.pyw-prev{margin:12px 2px;background:var(--card);border-radius:var(--r);padding:12px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.pyw-prev-hd{display:flex;justify-content:space-between;align-items:center;font-weight:700;margin-bottom:8px;font-size:14px}
+.pyw-list{display:flex;flex-direction:column;gap:6px}
+.pyw-row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px dashed var(--line)}
+.pyw-row.shown{background:#fffaf2}
+.pyw-no{color:var(--sub);min-width:20px}
+.pyw-py{font-size:18px;color:#2b6cb0;min-width:140px}
+.pyw-blank{flex:1;height:34px;border-bottom:2px solid #bbb}
+.pyw-ans{font-size:22px;color:var(--red);font-weight:700}
+.pyw-print{display:none}
+@media print{
+  body{background:#fff}
+  body *{visibility:hidden}
+  #pywPrint,#pywPrint *{visibility:visible}
+  #pywPrint{display:block;position:absolute;left:0;top:0;width:100%}
+  .pp-sheet{padding:6px 14px;font-family:"KaiTi","STKaiti","楷体",serif}
+  .pp-title{font-size:22px;font-weight:700;text-align:center;margin:6px 0 4px;font-family:inherit}
+  .pp-meta{font-size:14px;margin-bottom:16px;color:#222}
+  .pp-list{display:flex;flex-direction:column;gap:12px}
+  .pp-row{display:flex;align-items:flex-end;gap:12px;font-size:18px}
+  .pp-no{min-width:22px;color:#333}
+  .pp-py{color:#222;min-width:170px;font-family:inherit}
+  .pp-line{flex:1;border-bottom:1.5px solid #333;height:32px;display:inline-block}
+  .pp-ans{font-size:24px;color:var(--red);font-weight:700}
+}
+
 </style>
 </head>
 <body>
@@ -381,10 +426,12 @@ button{transition:transform .12s;-webkit-tap-highlight-color:transparent;}
     <button class="tab" data-tab="wrong"><svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><line x1="12" y1="6" x2="12" y2="18" stroke="#F56C6C"/></svg><span>错字本</span></button>
     <button class="tab" data-tab="review"><svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg><span>今日复习</span></button>
     <button class="tab" data-tab="beibei"><svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 8h7M9 12h7M9 16h4"/></svg><span>必背</span></button>
+    <button class="tab" data-tab="pinyin"><svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg><span>拼音写词</span></button>
     <button class="tab" data-tab="stats"><svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>报告</span></button>
     <button class="tab" data-tab="custom"><svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg><span>自定义</span></button>
   </nav>
   <main id="view"></main>
+  <div id="pywPrint" class="pyw-print"></div>
 </div>
 
 <button id="cartFab" class="cart-fab" aria-label="听写列表">
@@ -14297,7 +14344,7 @@ const Store = (function () {
     html += '<div class="rep-summary">今天需复习 <b>' + due.length + '</b> 个错字' + (wl.length ? ' · 错字库共 ' + wl.length + ' 个' : '') + '</div>';
     if (due.length) html += '<button class="btn primary block" id="revAll" style="margin:0 0 12px">一键复习全部（' + due.length + '）</button>';
     if (!wl.length) {
-      html += '<div class="empty">错字库为空。听写时标红的字会自动进入错字库，并按「第3 / 7 / 15 天」间隔安排复习。</div>';
+      html += '<div class="empty">错字库为空。听写时标红的字会自动进入错字库，并按「第 2 / 6 / 14 / 28 天」间隔安排复习。</div>';
     } else {
       if (due.length) {
         html += '<div class="rev-list">';
@@ -14319,6 +14366,138 @@ const Store = (function () {
       if (w) startReviewSession([w]);
     });
   }
+  // ---------- 看拼音写词语 ----------
+  let pywItems = [];           // 已选词 [{text, py, src}]
+  let pywShow = false;         // 屏幕预览是否显示答案
+  let pywG = 4, pywSem = '上';
+  const PYW_SRCLABEL = { table: '词语表', manual: '手动', wrong: '复习错词' };
+
+  function pywAdd(text, src) {
+    text = (text || '').trim();
+    if (!text) return;
+    if (pywItems.some(x => x.text === text)) return;
+    pywItems.push({ text, py: pinyinOf(text), src });
+  }
+  function pywRemove(text) { pywItems = pywItems.filter(x => x.text !== text); }
+  function pywHas(text) { return pywItems.some(x => x.text === text); }
+
+  function renderPinyinWrite() {
+    const v = document.getElementById('view');
+    const dueWrong = Store.getWrong().filter(w => reviewState(w).due);
+    const gs = [...new Set(D.grades.map(x => x.grade))].sort((a, b) => a - b);
+    let html = '';
+    html += '<div class="pyw-wrap">';
+    html += '<div class="pyw-hd">✍️ 看拼音写词语 <span class="hint">（屏幕对答案 · 可打印练习卷 / 答案卷）</span></div>';
+
+    // ① 词语表
+    html += '<div class="pyw-src"><div class="pyw-src-t">① 从词语表选</div>';
+    html += '<div class="pyw-gs">';
+    html += '<select id="pywG" class="mini">' + gs.map(g => '<option value="' + g + '"' + (g === pywG ? ' selected' : '') + '>' + CN[g] + '年级</option>').join('') + '</select>';
+    html += '<select id="pywSem" class="mini"><option value="上"' + (pywSem === '上' ? ' selected' : '') + '>上册</option><option value="下"' + (pywSem === '下' ? ' selected' : '') + '>下册</option></select>';
+    html += '<button class="btn sm" id="pywLoad">载入词语</button></div>';
+    html += '<div id="pywTableChips" class="pyw-chips"></div></div>';
+
+    // ② 手动输入
+    html += '<div class="pyw-src"><div class="pyw-src-t">② 手动输入词语</div>';
+    html += '<textarea id="pywManual" class="pyw-ta" placeholder="每行或空格分隔一个词，例如：&#10;奇观 据说 若隐若现"></textarea>';
+    html += '<button class="btn sm" id="pywAddManual">添加到练习</button></div>';
+
+    // ③ 每日复习错词
+    html += '<div class="pyw-src"><div class="pyw-src-t">③ 每日需复习的错字错词（' + dueWrong.length + '）</div>';
+    if (!dueWrong.length) html += '<div class="hint">今天没有到期复习的错字。</div>';
+    else {
+      html += '<div id="pywWrongChips" class="pyw-chips">';
+      dueWrong.forEach(w => { const py = pinyinOf(w.text); html += '<button class="pyw-chip' + (pywHas(w.text) ? ' on' : '') + '" data-pyw-text="' + w.text + '"><b>' + py + '</b><span>' + w.text + '</span></button>'; });
+      html += '</div>';
+    }
+    html += '</div>';
+
+    // 已选
+    html += '<div class="pyw-sel"><div class="pyw-src-t">已选 <b id="pywCnt">' + pywItems.length + '</b> 个' + (pywItems.length ? ' <button class="btn sm ghost" id="pywClear">清空</button>' : '') + '</div>';
+    if (pywItems.length) {
+      html += '<div class="pyw-chips">';
+      pywItems.forEach(it => html += '<button class="pyw-chip on" data-pyw-del="' + it.text + '"><b>' + it.py + '</b><span>' + it.text + ' · ' + (PYW_SRCLABEL[it.src] || '') + '</span><i>×</i></button>');
+      html += '</div>';
+      html += '<div class="pyw-actions">';
+      html += '<button class="btn primary" id="pywPreview">生成练习卷预览</button>';
+      html += '<button class="btn" id="pywPrintP">🖨 打印练习卷</button>';
+      html += '<button class="btn" id="pywPrintA">🖨 打印答案卷</button>';
+      html += '</div>';
+    }
+    html += '</div>';
+
+    // 预览
+    if (pywItems.length) {
+      html += '<div class="pyw-prev"><div class="pyw-prev-hd"><span>练习预览（点任一行可显/隐答案）</span><button class="btn sm" id="pywToggle">' + (pywShow ? '隐藏答案' : '显示答案') + '</button></div><div id="pywPrevList" class="pyw-list">' + pywRows(pywShow) + '</div></div>';
+    }
+    html += '</div>';
+    v.innerHTML = html;
+
+    const g = document.getElementById('pywG'), sem = document.getElementById('pywSem');
+    if (g) g.onchange = () => { pywG = +g.value; };
+    if (sem) sem.onchange = () => { pywSem = sem.value; };
+    const load = document.getElementById('pywLoad'); if (load) load.onclick = pywRenderTableChips;
+    const addM = document.getElementById('pywAddManual');
+    if (addM) addM.onclick = () => {
+      const ta = document.getElementById('pywManual');
+      ta.value.split(/[\s,，、]+/).filter(Boolean).forEach(t => pywAdd(t, 'manual'));
+      ta.value = ''; renderPinyinWrite();
+    };
+    v.querySelectorAll('[data-pyw-text]').forEach(b => b.onclick = () => { pywHas(b.dataset.pywText) ? pywRemove(b.dataset.pywText) : pywAdd(b.dataset.pywText, 'wrong'); renderPinyinWrite(); });
+    v.querySelectorAll('[data-pyw-del]').forEach(b => b.onclick = () => { pywRemove(b.dataset.pywDel); renderPinyinWrite(); });
+    const clr = document.getElementById('pywClear'); if (clr) clr.onclick = () => { pywItems = []; renderPinyinWrite(); };
+    const tg = document.getElementById('pywToggle'); if (tg) tg.onclick = () => { pywShow = !pywShow; renderPinyinWrite(); };
+    const pp = document.getElementById('pywPrintP'); if (pp) pp.onclick = () => pywPrint(false);
+    const pa = document.getElementById('pywPrintA'); if (pa) pa.onclick = () => pywPrint(true);
+    pywRenderTableChips();
+  }
+
+  function pywRenderTableChips() {
+    const box = document.getElementById('pywTableChips');
+    if (!box) return;
+    const lessons = getTable(pywG, pywSem, '词语表');
+    if (!lessons.length) { box.innerHTML = '<div class="hint">该年级 / 学期暂无词语表数据。</div>'; return; }
+    let h = '';
+    lessons.forEach(l => {
+      h += '<div class="pyw-les"><div class="pyw-les-t">' + l.lesson + (l.flag ? ' ★' : '') + '</div><div class="pyw-chips">';
+      l.items.forEach(it => { h += '<button class="pyw-chip' + (pywHas(it) ? ' on' : '') + '" data-pyw-text="' + it + '"><b>' + pinyinOf(it) + '</b><span>' + it + '</span></button>'; });
+      h += '</div></div>';
+    });
+    box.innerHTML = h;
+    box.querySelectorAll('[data-pyw-text]').forEach(b => b.onclick = () => {
+      const t = b.dataset.pywText;
+      if (pywHas(t)) pywRemove(t); else pywAdd(t, 'table');
+      renderPinyinWrite();
+    });
+  }
+
+  function pywRows(show) {
+    return pywItems.map((it, i) => {
+      const ans = show ? '<span class="pyw-ans">' + it.text + '</span>' : '<span class="pyw-blank"></span>';
+      return '<div class="pyw-row' + (show ? ' shown' : '') + '" data-pyw-reveal="' + i + '"><span class="pyw-no">' + (i + 1) + '.</span><span class="pyw-py">' + it.py + '</span>' + ans + '</div>';
+    }).join('');
+  }
+
+  function pywBuildPrint(show) {
+    const box = document.getElementById('pywPrint');
+    const today = fmtDate(new Date());
+    let h = '<div class="pp-sheet">';
+    h += '<div class="pp-title">看拼音写词语</div>';
+    h += '<div class="pp-meta">姓名：____________　　班级：____________　　日期：' + today + '</div>';
+    h += '<div class="pp-list">';
+    pywItems.forEach((it, i) => {
+      const blank = show ? '<span class="pp-ans">' + it.text + '</span>' : '<span class="pp-line"></span>';
+      h += '<div class="pp-row"><span class="pp-no">' + (i + 1) + '.</span><span class="pp-py">' + it.py + '</span>' + blank + '</div>';
+    });
+    h += '</div></div>';
+    box.innerHTML = h;
+  }
+  function pywPrint(show) {
+    if (!pywItems.length) { toast('请先选择词语'); return; }
+    pywBuildPrint(show);
+    setTimeout(() => window.print(), 60);
+  }
+
   function startReviewSession(entries) {
     if (!entries.length) { toast('没有可复习的错字'); return; }
     const items = entries.map(w => ({
@@ -15803,6 +15982,7 @@ const ZUCI_EXTRA = {
     else if (tab === 'wrong') renderWrongBook();
     else if (tab === 'review') renderReview();
     else if (tab === 'beibei') { bbeiNav = null; renderBeibei(); }
+    else if (tab === 'pinyin') renderPinyinWrite();
     else if (tab === 'custom') renderCustom();
     else renderStats();
   }
