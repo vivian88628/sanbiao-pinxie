@@ -392,6 +392,11 @@ button{transition:transform .12s;-webkit-tap-highlight-color:transparent;}
 .pyw-py{font-size:18px;color:#2b6cb0;min-width:140px}
 .pyw-blank{flex:1;height:34px;border-bottom:2px solid #bbb}
 .pyw-ans{font-size:22px;color:var(--red);font-weight:700}
+.tzg{position:relative;width:36px;height:36px;border:1px solid #9aa6ab;box-sizing:border-box;display:inline-block;margin:0 2px;vertical-align:middle;background:#fff}
+.tzg::before{content:"";position:absolute;left:50%;top:2px;bottom:2px;border-left:1px dashed #cdd3d8;transform:translateX(-.5px)}
+.tzg::after{content:"";position:absolute;top:50%;left:2px;right:2px;border-top:1px dashed #cdd3d8;transform:translateY(-.5px)}
+.tzg-ch{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:"KaiTi","STKaiti","楷体",serif;font-size:22px;color:var(--red);font-weight:700}
+.pyw-tzg{display:inline-flex;align-items:center;gap:0;flex-wrap:wrap}
 .pyw-print{display:none}
 @media print{
   body{background:#fff}
@@ -405,8 +410,11 @@ button{transition:transform .12s;-webkit-tap-highlight-color:transparent;}
   .pp-row{display:flex;align-items:flex-end;gap:12px;font-size:18px}
   .pp-no{min-width:22px;color:#333}
   .pp-py{color:#222;min-width:170px;font-family:inherit}
-  .pp-line{flex:1;border-bottom:1.5px solid #333;height:32px;display:inline-block}
-  .pp-ans{font-size:24px;color:var(--red);font-weight:700}
+  .pp-tzg{display:inline-flex;align-items:center;gap:0;flex-wrap:wrap}
+  .tzg{width:42px;height:42px;border:1px solid #333;margin:0 3px}
+  .tzg::before{border-left:1px dashed #b9b9b9}
+  .tzg::after{border-top:1px dashed #b9b9b9}
+  .tzg-ch{font-size:28px;color:#000;font-weight:400}
 }
 
 </style>
@@ -14471,10 +14479,13 @@ const Store = (function () {
     });
   }
 
+  function tzgBoxes(text, show) {
+    return [...text].map(ch => '<span class="tzg">' + (show ? '<span class="tzg-ch">' + ch + '</span>' : '') + '</span>').join('');
+  }
   function pywRows(show) {
     return pywItems.map((it, i) => {
-      const ans = show ? '<span class="pyw-ans">' + it.text + '</span>' : '<span class="pyw-blank"></span>';
-      return '<div class="pyw-row' + (show ? ' shown' : '') + '" data-pyw-reveal="' + i + '"><span class="pyw-no">' + (i + 1) + '.</span><span class="pyw-py">' + it.py + '</span>' + ans + '</div>';
+      const ans = tzgBoxes(it.text, show);
+      return '<div class="pyw-row' + (show ? ' shown' : '') + '" data-pyw-reveal="' + i + '"><span class="pyw-no">' + (i + 1) + '.</span><span class="pyw-py">' + it.py + '</span><span class="pyw-tzg">' + ans + '</span></div>';
     }).join('');
   }
 
@@ -14486,8 +14497,8 @@ const Store = (function () {
     h += '<div class="pp-meta">姓名：____________　　班级：____________　　日期：' + today + '</div>';
     h += '<div class="pp-list">';
     pywItems.forEach((it, i) => {
-      const blank = show ? '<span class="pp-ans">' + it.text + '</span>' : '<span class="pp-line"></span>';
-      h += '<div class="pp-row"><span class="pp-no">' + (i + 1) + '.</span><span class="pp-py">' + it.py + '</span>' + blank + '</div>';
+      const blank = tzgBoxes(it.text, show);
+      h += '<div class="pp-row"><span class="pp-no">' + (i + 1) + '.</span><span class="pp-py">' + it.py + '</span><span class="pp-tzg">' + blank + '</span></div>';
     });
     h += '</div></div>';
     box.innerHTML = h;
