@@ -395,7 +395,9 @@ button{transition:transform .12s;-webkit-tap-highlight-color:transparent;}
 .tzg{position:relative;width:36px;height:36px;border:1px solid #9aa6ab;box-sizing:border-box;display:inline-block;margin:0 2px;vertical-align:middle;background:#fff}
 .tzg::before{content:"";position:absolute;left:50%;top:2px;bottom:2px;border-left:1px dashed #cdd3d8;transform:translateX(-.5px)}
 .tzg::after{content:"";position:absolute;top:50%;left:2px;right:2px;border-top:1px dashed #cdd3d8;transform:translateY(-.5px)}
-.tzg-ch{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:"KaiTi","STKaiti","楷体",serif;font-size:22px;color:var(--red);font-weight:700}
+.tzg-d1,.tzg-d2{position:absolute;left:50%;top:2px;bottom:2px;width:0;border-left:1px dashed #dbe0e5;transform-origin:center;transform:translateX(-.5px) rotate(45deg);z-index:0}
+.tzg-d2{transform:translateX(-.5px) rotate(-45deg)}
+.tzg-ch{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:"KaiTi","STKaiti","楷体",serif;font-size:22px;color:var(--red);font-weight:700;z-index:2}
 .pyw-tzg{display:inline-flex;align-items:center;gap:0;flex-wrap:wrap}
 .pyw-print{display:none}
 @media print{
@@ -414,6 +416,7 @@ button{transition:transform .12s;-webkit-tap-highlight-color:transparent;}
   .tzg{width:42px;height:42px;border:1px solid #333;margin:0 3px}
   .tzg::before{border-left:1px dashed #b9b9b9}
   .tzg::after{border-top:1px dashed #b9b9b9}
+  .tzg-d1,.tzg-d2{border-left:1px dashed #dcdcdc}
   .tzg-ch{font-size:28px;color:#000;font-weight:400}
 }
 
@@ -14480,7 +14483,7 @@ const Store = (function () {
   }
 
   function tzgBoxes(text, show) {
-    return [...text].map(ch => '<span class="tzg">' + (show ? '<span class="tzg-ch">' + ch + '</span>' : '') + '</span>').join('');
+    return [...text].map(ch => '<span class="tzg"><i class="tzg-d1"></i><i class="tzg-d2"></i>' + (show ? '<span class="tzg-ch">' + ch + '</span>' : '') + '</span>').join('');
   }
   function pywRows(show) {
     return pywItems.map((it, i) => {
