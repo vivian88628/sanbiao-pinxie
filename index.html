@@ -16034,6 +16034,21 @@ const ZUCI_EXTRA = {
     if (ch) Store.setHistory(h);
   }
 
+  // 本地离线（file://）下部分浏览器会禁用 localStorage，静默失败会导致数据丢失。
+  // Store 内部已 try/catch 兜底不会崩，这里额外检测并在不可用时给出可见告警。
+  function storageOK() {
+    try { localStorage.setItem('__t', '1'); localStorage.removeItem('__t'); return true; } catch (e) { return false; }
+  }
+  function warnNoStorage() {
+    if (document.getElementById('noStoreWarn')) return;
+    const el = document.createElement('div');
+    el.id = 'noStoreWarn';
+    el.className = 'bak-warn';
+    el.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:9999;margin:0;border-radius:0;padding:10px 12px;font-size:13px;line-height:1.6';
+    el.innerHTML = '⚠️ <b>本地存储不可用</b>：当前环境禁止保存数据，退出后会清空。请改用 Chrome / Safari 打开本文件；若仍不行，每次用完点「三表内容 → 下载文件」备份。';
+    document.body.appendChild(el);
+  }
+
   function init() {
     enablePressFx();
     initVoices();
@@ -16048,6 +16063,7 @@ const ZUCI_EXTRA = {
     renderKidSwitch();
     show(Store.getLastTab());
     maybeRemindBackup();
+    if (!storageOK()) warnNoStorage();
     /* service worker 已在单文件版禁用 */
   }
   document.addEventListener('DOMContentLoaded', init);
