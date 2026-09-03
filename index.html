@@ -385,7 +385,7 @@ button{transition:transform .12s;-webkit-tap-highlight-color:transparent;}
 .pyw-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .pyw-prev{margin:12px 2px;background:var(--card);border-radius:var(--r);padding:12px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
 .pyw-prev-hd{display:flex;justify-content:space-between;align-items:center;font-weight:700;margin-bottom:8px;font-size:14px}
-.pyw-list{display:flex;flex-direction:column;gap:6px}
+.pyw-list{display:flex;flex-wrap:wrap;gap:12px 22px;align-items:flex-start}
 .pyw-row{display:block;padding:8px 4px;border-bottom:1px dashed var(--line)}
 .pyw-top{display:flex;align-items:center;gap:10px}
 .pyw-row.shown{background:#fffaf2}
@@ -409,7 +409,7 @@ button{transition:transform .12s;-webkit-tap-highlight-color:transparent;}
   .pp-sheet{padding:6px 14px;font-family:"KaiTi","STKaiti","楷体",serif}
   .pp-title{font-size:22px;font-weight:700;text-align:center;margin:6px 0 4px;font-family:inherit}
   .pp-meta{font-size:14px;margin-bottom:16px;color:#222}
-  .pp-list{display:flex;flex-direction:column;gap:12px}
+  .pp-list{display:flex;flex-wrap:wrap;gap:14px 26px;align-items:flex-start}
   .pp-row{display:block;font-size:18px}
   .pp-top{display:flex;align-items:baseline;gap:12px}
   .pp-no{min-width:22px;color:#333}
@@ -420,6 +420,8 @@ button{transition:transform .12s;-webkit-tap-highlight-color:transparent;}
   .tzg::after{border-top:1px dashed #b9b9b9}
   .tzg-d1,.tzg-d2{border-left:1px dashed #dcdcdc}
   .tzg-ch{font-size:28px;color:#000;font-weight:400}
+  .pp-fill-hd{font-size:14px;color:#222;margin:16px 0 6px}
+  .pp-fill{display:flex;flex-wrap:wrap;gap:0}
 }
 
 </style>
@@ -14384,6 +14386,7 @@ const Store = (function () {
   let pywShow = false;         // 屏幕预览是否显示答案
   let pywG = 4, pywSem = '上';
   const PYW_SRCLABEL = { table: '词语表', manual: '手动', wrong: '复习错词' };
+  const PYW_FILL = 30;          // 练习卷底部空白米字格数量（订正/抄写用）
 
   function pywAdd(text, src) {
     text = (text || '').trim();
@@ -14505,7 +14508,13 @@ const Store = (function () {
       const blank = tzgBoxes(it.text, show);
       h += '<div class="pp-row"><div class="pp-top"><span class="pp-no">' + (i + 1) + '.</span><span class="pp-py">' + it.py + '</span></div><span class="pp-tzg">' + blank + '</span></div>';
     });
-    h += '</div></div>';
+    h += '</div>';
+    if (!show) {
+      let fill = '';
+      for (let k = 0; k < PYW_FILL; k++) fill += '<span class="tzg"><i class="tzg-d1"></i><i class="tzg-d2"></i></span>';
+      h += '<div class="pp-fill-hd">订正 / 抄写：</div><div class="pp-fill">' + fill + '</div>';
+    }
+    h += '</div>';
     box.innerHTML = h;
   }
   function pywPrint(show) {
