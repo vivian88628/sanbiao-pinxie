@@ -1,0 +1,15 @@
+{
+  "name": "课后三表循环听写",
+  "short_name": "三表循环听写",
+  "description": "1-6年级语文课后识字表/写字表/词语表听写 + 必背默写，离线可用，可加到手机桌面。",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F7F8FA",
+  "theme_color": "#FF8C42",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" },
+    { "src": "icons/icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }
+  ]
+}

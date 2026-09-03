@@ -7,7 +7,9 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23FF8C42'/%3E%3Ctext x='32' y='44' font-size='36' text-anchor='middle' fill='white'%3E听%3C/text%3E%3C/svg%3E">
 
 <title>课后三表循环听写</title>
-  <style>
+<link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon.png">
+<style>
 :root{
   --primary:#FF8C42; --primary-d:#E76F2E;
   --yellow:#FFF0D6; --blue:#D6ECFF; --green:#D4F5D9;
@@ -16064,7 +16066,7 @@ const ZUCI_EXTRA = {
     show(Store.getLastTab());
     maybeRemindBackup();
     if (!storageOK()) warnNoStorage();
-    /* service worker 已在单文件版禁用 */
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').catch(() => {}); }
   }
   document.addEventListener('DOMContentLoaded', init);
 })();
