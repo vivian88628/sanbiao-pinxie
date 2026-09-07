@@ -14532,7 +14532,8 @@ const Store = (function () {
       grade: w.grade, sem: w.sem, table: w.table, lesson: w.lesson,
       title: w.title + '（复习）', items: [w.text]
     }));
-    beginDictation(items, true);
+    // 复习统一走「系统报听」：只显示拼音、逐个报、10 秒后自动下一个、可手动「下一个」
+    beginSystemDictation(items, true);
   }
 
   // ---------- 报告页 ----------
@@ -15767,7 +15768,7 @@ const ZUCI_EXTRA = {
     return t;
   }
   function speakTile(t) {
-    speakText(tileSpoken(t));
+    return speakText(tileSpoken(t));
   }
   // 顺序报听写：逐词朗读两遍 + 间隔，可停止
   let seqSpeaking = false, seqTimer = null, seqTimer2 = null;
@@ -15913,13 +15914,13 @@ const ZUCI_EXTRA = {
 
   // ---------- 系统报听（显示拼音、系统朗读、10秒间隔、可手动下一个） ----------
   let sys = null;
-  function beginSystemDictation(cartItems) {
+  function beginSystemDictation(cartItems, fromReview) {
     if (!cartItems || !cartItems.length) { toast('听写列表为空'); return; }
     closeSheet();
     const ref = [];
     cartItems.forEach(it => { picked(it).forEach(t => ref.push({ entry: it, text: t, wrong: false, reason: null })); });
     if (!ref.length) { toast('没有可听写的内容'); return; }
-    sys = { ref, idx: 0, total: ref.length, timer: null };
+    sys = { ref, idx: 0, total: ref.length, timer: null, fromReview: !!fromReview };
     renderSysPlayer();
   }
   function stopSys() {
@@ -15940,7 +15941,7 @@ const ZUCI_EXTRA = {
     const len = [...item.text].length;
     const masks = '＿'.repeat(len);
     const isLast = sys.idx === sys.total - 1;
-    let html = '<div class="sys-head"><span>系统报听写 · 第 ' + (sys.idx + 1) + ' / ' + sys.total + '</span><button class="x" id="sysExit">×</button></div>';
+    let html = '<div class="sys-head"><span>' + (sys.fromReview ? '复习错字 · 系统报听' : '系统报听写') + ' · 第 ' + (sys.idx + 1) + ' / ' + sys.total + '</span><button class="x" id="sysExit">×</button></div>';
     html += '<div class="sys-body">';
     html += '  <div class="sys-py">' + esc(py) + '</div>';
     html += '  <div class="sys-mask">' + esc(masks) + '</div>';
@@ -15949,20 +15950,45 @@ const ZUCI_EXTRA = {
     html += '  <button class="btn ghost" id="sysReplay">🔊 再听一次</button>';
     html += '  <button class="btn primary" id="sysNext">' + (isLast ? '完成 ✅' : '下一个 ➤') + '</button>';
     html += '</div>';
-    html += '<div class="sys-tip">' + (TTS_OK ? '系统已朗读本词（' + (item.text.length === 1 ? '含组词消歧' : '逐词朗读') + '）；孩子写完按「下一个」，或等 <span id="sysCount">10</span> 秒自动进入下一个。' : '⚠️ 本设备无语音朗读，请家长照拼音口报；孩子写完按「下一个」，或等 <span id="sysCount">10</span> 秒自动下一个。') + '</div>';
+    html += '<div class="sys-tip">' + (TTS_OK ? '系统已朗读本词（' + (item.text.length === 1 ? '含组词消歧' : '逐词朗读') + '）；<b>读完后</b>再等 <span id="sysCount">10</span> 秒自动进入下一个，孩子写完也可直接按「下一个」。' : '⚠️ 本设备无语音朗读，请家长照拼音口报；孩子写完按「下一个」，或等 <span id="sysCount">10</span> 秒自动下一个。') + '</div>';
     sess.innerHTML = html; sess.classList.remove('hidden');
-    if (TTS_OK) speakTile(item.text);
     if (sys.timer) clearInterval(sys.timer);
+    // 每次渲染发一个新 token：旧词的回调/定时器失效，避免切词后倒计时错乱
+    sys.token = (sys.token || 0) + 1;
+    const myToken = sys.token;
     let left = 10;
     const cnt = document.getElementById('sysCount');
     if (cnt) cnt.textContent = left;
-    sys.timer = setInterval(() => {
-      left--;
-      if (cnt) cnt.textContent = Math.max(left, 0);
-      if (left <= 0) { sysAdvance(); }
-    }, 1000);
-    document.getElementById('sysExit').onclick = () => { stopSys(); sess.classList.add('hidden'); openCart(); };
-    document.getElementById('sysReplay').onclick = () => { if (TTS_OK) speakTile(item.text); };
+
+    let started = false;
+    const startCount = () => {
+      if (sys.timer) clearInterval(sys.timer);
+      sys.timer = setInterval(() => {
+        if (sys.token !== myToken) { clearInterval(sys.timer); sys.timer = null; return; }
+        left--;
+        if (cnt) cnt.textContent = Math.max(left, 0);
+        if (left <= 0) { sysAdvance(); }
+      }, 1000);
+    };
+    const kick = () => { if (started || sys.token !== myToken) return; started = true; startCount(); };
+
+    // 「报完以后再等 10 秒」：优先等朗读结束再起倒计时；
+    // 部分设备不触发 onend，故另加兜底定时器（按朗读文本长度估算 + 余量）强制开始，避免卡住不前进。
+    if (TTS_OK) {
+      const u = speakTile(item.text);
+      if (u) { u.onend = kick; u.onerror = kick; }
+      const spoken = tileSpoken(item.text) || item.text;
+      const estMs = 900 + spoken.length * 280 + 1200;
+      setTimeout(kick, Math.max(4000, estMs));
+    } else {
+      kick(); // 无语音：家长照拼音口报，直接开始 10 秒倒计时
+    }
+    // 复习入口进来时回复习页；从购物车进系统报听则回购物车
+    const backTo = () => { stopSys(); sess.classList.add('hidden'); if (sys.fromReview) show(state.tab); else openCart(); };
+    document.getElementById('sysExit').onclick = backTo;
+    // 重听会占用时间，所以同步把倒计时重置回 10 秒
+    const resetCount = () => { if (sys.token !== myToken) return; left = 10; if (cnt) cnt.textContent = left; if (started) startCount(); };
+    document.getElementById('sysReplay').onclick = () => { if (TTS_OK) speakTile(item.text); resetCount(); };
     document.getElementById('sysNext').onclick = () => { sysAdvance(); };
   }
   function renderSysReview() {
@@ -15971,7 +15997,7 @@ const ZUCI_EXTRA = {
     stopSys();
     const groups = {};
     sys.ref.forEach((r, i) => { const k = r.entry.key; (groups[k] = groups[k] || { entry: r.entry, items: [] }).items.push({ i, text: r.text }); });
-    let html = '<div class="sess-head"><span>系统报听写 · 判错</span><button class="x" id="sysRevExit">×</button></div>';
+    let html = '<div class="sess-head"><span>' + (sys.fromReview ? '复习错字 · 判错' : '系统报听写 · 判错') + '</span><button class="x" id="sysRevExit">×</button></div>';
     html += '<div class="sess-tip">系统已报完全部词。请对照孩子的纸，点标红写错的字，完成后存入错词库。</div>';
     html += '<div class="sess-list" id="sysRevList">';
     Object.values(groups).forEach(g => {
@@ -15983,9 +16009,11 @@ const ZUCI_EXTRA = {
     html += reasonDockHtml();
     html += '<div class="sess-acts"><button class="btn ghost" id="sysRevBack">返回</button><button class="btn primary" id="sysRevDone">完成</button></div>';
     sess.innerHTML = html; sess.classList.remove('hidden');
-    document.getElementById('sysRevExit').onclick = () => { sess.classList.add('hidden'); openCart(); };
-    document.getElementById('sysRevBack').onclick = () => { sess.classList.add('hidden'); openCart(); };
-    document.getElementById('sysRevDone').onclick = () => { stopSys(); finishSession(sys.ref, false); };
+    const backTo = () => { stopSys(); sess.classList.add('hidden'); if (sys.fromReview) show(state.tab); else openCart(); };
+    document.getElementById('sysRevExit').onclick = backTo;
+    document.getElementById('sysRevBack').onclick = backTo;
+    // fromReview=true 时 finishSession 不会清空购物车（复习项本就不在车里）
+    document.getElementById('sysRevDone').onclick = () => { stopSys(); finishSession(sys.ref, !!sys.fromReview); };
     const list = document.getElementById('sysRevList');
     list.querySelectorAll('.sw').forEach(el => el.onclick = () => {
       const i = +el.dataset.i; sys.ref[i].wrong = !sys.ref[i].wrong; el.classList.toggle('wrong', sys.ref[i].wrong);
