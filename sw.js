@@ -3,7 +3,7 @@
 // 目的：解决 github.io 境外访问慢 —— 只要成功打开过一次，之后断网 / 慢网都能瞬间打开。
 // 注意：每次发布新版本请修改 CACHE 版本号，旧缓存会在 activate 时自动清理。
 
-const CACHE = 'dict-pwa-v2';
+const CACHE = 'dict-pwa-v3';
 const SHELL = 'index.html';
 const FILES = ['./', SHELL, 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon.png'];
 

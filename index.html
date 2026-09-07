@@ -14532,8 +14532,8 @@ const Store = (function () {
       grade: w.grade, sem: w.sem, table: w.table, lesson: w.lesson,
       title: w.title + '（复习）', items: [w.text]
     }));
-    // 复习统一走「系统报听」：只显示拼音、逐个报、10 秒后自动下一个、可手动「下一个」
-    beginSystemDictation(items, true);
+    // 复习可选 家长报听 / 系统报听（与今日听写一致）
+    chooseDictationMode(items, true);
   }
 
   // ---------- 报告页 ----------
@@ -14872,7 +14872,7 @@ const Store = (function () {
       const it = cart2.find(x => x.key === key); if (it) { it.pick = []; Store.setCart(cart2); openCart(); updateCartBadge(); }
     });
     const cl = document.getElementById('cartClear'); if (cl) cl.onclick = () => { Store.clearCart(); state.cartEdit.clear(); openCart(); updateCartBadge(); };
-    const st = document.getElementById('cartStart'); if (st) st.onclick = chooseDictationMode;
+    const st = document.getElementById('cartStart'); if (st) st.onclick = () => chooseDictationMode();
   }
   function closeSheet() {
     document.getElementById('sheet').classList.add('hidden');
@@ -15770,6 +15770,25 @@ const ZUCI_EXTRA = {
   function speakTile(t) {
     return speakText(tileSpoken(t));
   }
+  // 报两遍：两个 utterance 入队顺序播放，返回第二个（onend 在两遍都读完时触发）
+  function speakTileTwice(t) {
+    if (!TTS_OK) return null;
+    const text = tileSpoken(t);
+    const ss = window.speechSynthesis;
+    try { ss.cancel(); } catch (e) {}
+    const mk = () => {
+      const u = new SpeechSynthesisUtterance(text);
+      const v = pickVoice();
+      if (v) u.voice = v;
+      u.lang = (v && v.lang) || 'zh-CN';
+      u.rate = getVoiceRate();
+      u.pitch = 1;
+      return u;
+    };
+    const u2 = mk();
+    try { ss.speak(mk()); ss.speak(u2); } catch (e) { return speakText(text); }
+    return u2;
+  }
   // 顺序报听写：逐词朗读两遍 + 间隔，可停止
   let seqSpeaking = false, seqTimer = null, seqTimer2 = null;
   function playSequence(words) {
@@ -15896,20 +15915,23 @@ const ZUCI_EXTRA = {
     } catch (e) {}
     return text;
   }
-  function chooseDictationMode() {
+  // fromReview=true 表示这批条目来自「一键复习」，退出/完成时回到复习页且不清购物车
+  function chooseDictationMode(items, fromReview) {
     const sheet = document.getElementById('sheet');
-    const cart = Store.getCart();
-    const n = cart.reduce((s, x) => s + picked(x).length, 0);
+    const list = Array.isArray(items) ? items : Store.getCart();
+    const rev = !!fromReview;
+    const n = list.reduce((s, x) => s + picked(x).length, 0);
+    if (!n) { toast('没有可听写的内容'); return; }
     let html = '<div class="sheet-head">选择听写方式<button class="x" id="modeClose">×</button></div>';
-    html += '<div class="hint" style="margin:4px 0 10px">共 <b>' + n + '</b> 个待听写内容。</div>';
+    html += '<div class="hint" style="margin:4px 0 10px">' + (rev ? '复习错字' : '待听写') + '共 <b>' + n + '</b> 个内容。</div>';
     html += '<div class="mode-cards">';
     html += '<button class="mode-card" id="modeParent"><div class="mc-ico">👨‍👩‍👧</div><div class="mc-title">家长报听</div><div class="mc-desc">显示字词，家长口报、点字标红判错（当前默认方式）。</div></button>';
-    html += '<button class="mode-card" id="modeSys"><div class="mc-ico">🤖</div><div class="mc-title">系统报听</div><div class="mc-desc">显示拼音、系统朗读，10 秒后自动下一个；孩子写完可自己按「下一个」。</div></button>';
+    html += '<button class="mode-card" id="modeSys"><div class="mc-ico">🤖</div><div class="mc-title">系统报听</div><div class="mc-desc">显示拼音、系统朗读<b>每个字词读两遍</b>，读完再等 10 秒自动下一个；孩子写完可自己按「下一个」。</div></button>';
     html += '</div>';
     sheet.innerHTML = html; sheet.classList.remove('hidden'); document.getElementById('overlay').classList.remove('hidden');
     document.getElementById('modeClose').onclick = closeSheet;
-    document.getElementById('modeParent').onclick = () => { closeSheet(); beginDictation(cart, false); };
-    document.getElementById('modeSys').onclick = () => { closeSheet(); beginSystemDictation(cart); };
+    document.getElementById('modeParent').onclick = () => { closeSheet(); beginDictation(list, rev); };
+    document.getElementById('modeSys').onclick = () => { closeSheet(); beginSystemDictation(list, rev); };
   }
 
   // ---------- 系统报听（显示拼音、系统朗读、10秒间隔、可手动下一个） ----------
@@ -15950,7 +15972,7 @@ const ZUCI_EXTRA = {
     html += '  <button class="btn ghost" id="sysReplay">🔊 再听一次</button>';
     html += '  <button class="btn primary" id="sysNext">' + (isLast ? '完成 ✅' : '下一个 ➤') + '</button>';
     html += '</div>';
-    html += '<div class="sys-tip">' + (TTS_OK ? '系统已朗读本词（' + (item.text.length === 1 ? '含组词消歧' : '逐词朗读') + '）；<b>读完后</b>再等 <span id="sysCount">10</span> 秒自动进入下一个，孩子写完也可直接按「下一个」。' : '⚠️ 本设备无语音朗读，请家长照拼音口报；孩子写完按「下一个」，或等 <span id="sysCount">10</span> 秒自动下一个。') + '</div>';
+    html += '<div class="sys-tip">' + (TTS_OK ? '系统已朗读本词 <b>两遍</b>（' + (item.text.length === 1 ? '含组词消歧' : '逐词朗读') + '）；<b>两遍都读完后</b>再等 <span id="sysCount">10</span> 秒自动进入下一个，孩子写完也可直接按「下一个」。' : '⚠️ 本设备无语音朗读，请家长照拼音口报（每个报两遍）；孩子写完按「下一个」，或等 <span id="sysCount">10</span> 秒自动下一个。') + '</div>';
     sess.innerHTML = html; sess.classList.remove('hidden');
     if (sys.timer) clearInterval(sys.timer);
     // 每次渲染发一个新 token：旧词的回调/定时器失效，避免切词后倒计时错乱
@@ -15975,11 +15997,11 @@ const ZUCI_EXTRA = {
     // 「报完以后再等 10 秒」：优先等朗读结束再起倒计时；
     // 部分设备不触发 onend，故另加兜底定时器（按朗读文本长度估算 + 余量）强制开始，避免卡住不前进。
     if (TTS_OK) {
-      const u = speakTile(item.text);
+      const u = speakTileTwice(item.text); // 每个字词读两遍
       if (u) { u.onend = kick; u.onerror = kick; }
       const spoken = tileSpoken(item.text) || item.text;
-      const estMs = 900 + spoken.length * 280 + 1200;
-      setTimeout(kick, Math.max(4000, estMs));
+      const estMs = (900 + spoken.length * 280 + 1200) * 2; // 两遍，兜底时长翻倍
+      setTimeout(kick, Math.max(6000, estMs));
     } else {
       kick(); // 无语音：家长照拼音口报，直接开始 10 秒倒计时
     }
@@ -15988,7 +16010,7 @@ const ZUCI_EXTRA = {
     document.getElementById('sysExit').onclick = backTo;
     // 重听会占用时间，所以同步把倒计时重置回 10 秒
     const resetCount = () => { if (sys.token !== myToken) return; left = 10; if (cnt) cnt.textContent = left; if (started) startCount(); };
-    document.getElementById('sysReplay').onclick = () => { if (TTS_OK) speakTile(item.text); resetCount(); };
+    document.getElementById('sysReplay').onclick = () => { if (TTS_OK) speakTileTwice(item.text); resetCount(); };
     document.getElementById('sysNext').onclick = () => { sysAdvance(); };
   }
   function renderSysReview() {
